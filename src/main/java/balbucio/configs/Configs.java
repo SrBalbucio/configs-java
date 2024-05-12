@@ -1,5 +1,6 @@
 package balbucio.configs;
 
+import balbucio.throwable.Throwable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -8,6 +9,7 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.inspector.TagInspector;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -33,11 +35,6 @@ public class Configs {
         yml.dump(object, writer);
     }
 
-    public static <T> T loadObjectFromJsonFile(File file, Class<T> clazz) throws Exception{
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        return gson.fromJson(reader, clazz);
-    }
-
     public static void saveObjectInJsonFile(File file, Object obj) throws Exception{
         FileWriter writer = new FileWriter(file);
         writer.append(gson.toJson(obj));
@@ -45,12 +42,24 @@ public class Configs {
         writer.close();
     }
 
-    public static <T> T getObjectInJsonEntry(JarFile jarFile, String path, Class<T> clazz) throws IOException {
+    public static <T> T loadObjectFromJsonFile(File file, Class<T> clazz) throws Exception{
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        return gson.fromJson(reader, clazz);
+    }
+
+    public static <T> T getObjectInJarEntry(JarFile jarFile, String path, Class<T> clazz) throws IOException {
         JarEntry entry = jarFile.getJarEntry(path);
         if(entry != null && !entry.isDirectory()) {
-            return  gson.fromJson(new InputStreamReader(jarFile.getInputStream(entry)), clazz);
+            return gson.fromJson(new InputStreamReader(jarFile.getInputStream(entry)), clazz);
         }
         return null;
+    }
+
+    public static YamlConfiguration copyOrLoadYamlConfiguration(File file, String classpathFile){
+        if(!file.exists()){
+            Throwable.silently(() -> Files.copy(Configs.class.getResourceAsStream(classpathFile), file.toPath()));
+        }
+        return YamlConfiguration.loadConfiguration(file);
     }
 
     public static JSONObject loadJSONObject(File file) throws FileNotFoundException {
