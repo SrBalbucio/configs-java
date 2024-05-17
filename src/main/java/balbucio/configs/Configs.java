@@ -62,6 +62,21 @@ public class Configs {
         return YamlConfiguration.loadConfiguration(file);
     }
 
+    public static YamlConfiguration updateOrLoadYamlConfiguration(File file, String classpathFile, String versionKey, double version){
+        if(!file.exists()){
+            Throwable.silently(() -> Files.copy(Configs.class.getResourceAsStream(classpathFile), file.toPath()));
+            return YamlConfiguration.loadConfiguration(file);
+        }
+
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        if(config.getDouble(versionKey, 0.0) < version){
+            file.renameTo(new File("old-"+file.getName()));
+            Throwable.silently(() -> Files.copy(Configs.class.getResourceAsStream(classpathFile), file.toPath()));
+            return YamlConfiguration.loadConfiguration(file);
+        }
+        return config;
+    }
+
     public static JSONObject loadJSONObject(File file) throws FileNotFoundException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         return new JSONObject(reader);
